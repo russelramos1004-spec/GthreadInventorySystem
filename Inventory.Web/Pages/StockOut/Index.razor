@@ -1,0 +1,84 @@
+@attribute [Authorize]
+@page "/stockout"
+@inject Inventory.Core.Services.StockOutService StockOutService
+@inject Inventory.Core.Services.ProductService ProductService
+@inject Inventory.Core.Services.CustomerService CustomerService
+
+<h3>Stock Out</h3>
+<div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select @bind="productId" class="input">
+            <option value="0">-- Product --</option>
+            @foreach (var p in products)
+            {
+                <option value="@p.Id">@p.Name</option>
+            }
+        </select>
+
+        <select @bind="customerId" class="input">
+            <option value="0">-- Customer --</option>
+            @foreach (var c in customers)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+
+        <input class="input" placeholder="Quantity" type="number" @bind="qty" />
+        <input class="input" placeholder="Total Amount" type="number" step="0.01" @bind="total" />
+        <button class="button" @onclick="Add">Add</button>
+    </div>
+
+   
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div style="color:red; margin-bottom:8px;">@message</div>
+    }
+
+    <ul>
+        @foreach (var so in stockouts)
+        {
+            <li>@so.Id - @so.ProductId - @so.Quantity - @so.TotalAmount</li>
+        }
+    </ul>
+</div>
+
+@code {
+    List<Inventory.Core.Models.Product> products = new();
+    List<Inventory.Core.Models.Customer> customers = new();
+    List<Inventory.Core.Models.StockOut> stockouts = new();
+    int productId = 0, customerId = 0, qty = 0;
+    decimal total = 0;
+    string message = ""; 
+
+    protected override void OnInitialized()
+    {
+        products = ProductService.GetAll();
+        customers = CustomerService.GetAll();
+        stockouts = StockOutService.GetAll();
+    }
+
+    void Add()
+    {
+        string msg; 
+        bool success = StockOutService.Create(new Inventory.Core.Models.StockOut
+        {
+            ProductId = productId,
+            CustomerId = customerId,
+            Quantity = qty,
+            TotalAmount = total,
+            Date = DateTime.Now
+        }, out msg);
+
+        message = "Field required"; 
+
+        if (!success)
+        {
+            return; 
+        }
+
+        
+        stockouts = StockOutService.GetAll();
+        productId = customerId = qty = 0;
+        total = 0;
+    }
+}

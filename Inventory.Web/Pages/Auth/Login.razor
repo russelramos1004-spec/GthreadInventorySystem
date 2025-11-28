@@ -1,0 +1,84 @@
+@attribute [AllowAnonymous]
+@page "/auth/login"
+@inject Inventory.Core.Services.UserService UserService
+@inject NavigationManager Nav
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthProv
+
+<div style="max-width:480px; margin:36px auto;">
+    <h3 class="center">Sign in to Inventory</h3>
+
+    <div class="card" style="max-width:420px; margin:12px auto;">
+        <div class="form-row">
+            <div class="form-item">
+                <input class="input" @bind="username" placeholder="Username" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-item">
+                <input class="input" type="password" @bind="password" placeholder="Password" />
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="button" @onclick="DoLogin">Login</button>
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <span class="text-muted" style="color:#c82333">@message</span>
+            }
+        </div>
+    </div>
+    <div class="text-muted center">Enter credentials to access the inventory system</div>
+</div>
+
+@code {
+    string username = "";
+    string password = "";
+    string message = "";
+
+    void DoLogin()
+    {
+        try
+        {
+           
+            var u = UserService.Login(username, password);
+
+            if (u != null)
+            {
+                
+                try
+                {
+                    var prov = AuthProv as Inventory.Web.Auth.SessionAuthProvider;
+                    if (prov != null)
+                    {
+                        prov.Login(u.Username, u.Role);
+                    }
+                    else
+                    {
+                       
+                        Console.WriteLine("Warning: AuthProv is not SessionAuthProvider. Session not set.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    
+                    Console.WriteLine($"AuthProv login error: {ex.Message}");
+                }
+
+               
+                var encoded = System.Net.WebUtility.UrlEncode(u.Username);
+                Nav.NavigateTo($"/?welcome={encoded}");
+            }
+            else
+            {
+                message = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            
+            message = "An error occurred during login. Check server logs.";
+            Console.WriteLine($"Login error: {ex}");
+        }
+    }
+}

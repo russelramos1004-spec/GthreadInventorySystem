@@ -1,0 +1,70 @@
+@attribute [Authorize]
+@page "/transactions"
+@inject Inventory.Core.Services.StockInService StockInService
+@inject Inventory.Core.Services.StockOutService StockOutService
+@inject Inventory.Core.Services.ProductService ProductService
+@inject Inventory.Core.Services.SupplierService SupplierService
+@inject Inventory.Core.Services.CustomerService CustomerService
+
+<h3>Transactions</h3>
+
+<div class="tx-grid">
+    <div class="card">
+        <h4>Stock In</h4>
+        <table class="table">
+            <thead><tr><th>Date</th><th>Product</th><th>Supplier</th><th>Qty</th><th>Total</th></tr></thead>
+            <tbody>
+                @foreach (var si in stockins)
+                {
+                    <tr>
+                        <td>@si.DateIn.ToString("g")</td>
+                        <td>@GetProductName(si.ProductId)</td>
+                        <td>@GetSupplierName(si.SupplierId)</td>
+                        <td>@si.Quantity</td>
+                        <td>@si.TotalCost.ToString("F2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h4>Stock Out</h4>
+        <table class="table">
+            <thead><tr><th>Date</th><th>Product</th><th>Customer</th><th>Qty</th><th>Total</th></tr></thead>
+            <tbody>
+                @foreach (var so in stockouts)
+                {
+                    <tr>
+                        <td>@so.Date.ToString("g")</td>
+                        <td>@GetProductName(so.ProductId)</td>
+                        <td>@GetCustomerName(so.CustomerId)</td>
+                        <td>@so.Quantity</td>
+                        <td>@so.TotalAmount.ToString("F2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    List<Inventory.Core.Models.StockIn> stockins = new();
+    List<Inventory.Core.Models.StockOut> stockouts = new();
+    List<Inventory.Core.Models.Product> products = new();
+    List<Inventory.Core.Models.Supplier> suppliers = new();
+    List<Inventory.Core.Models.Customer> customers = new();
+
+    protected override void OnInitialized()
+    {
+        stockins = StockInService.GetAll() ?? new();
+        stockouts = StockOutService.GetAll() ?? new();
+        products = ProductService.GetAll() ?? new();
+        suppliers = SupplierService.GetAll() ?? new();
+        customers = CustomerService.GetAll() ?? new();
+    }
+
+    string GetProductName(int id) => products.FirstOrDefault(p => p.Id == id)?.Name ?? "-";
+    string GetSupplierName(int id) => suppliers.FirstOrDefault(s => s.Id == id)?.Name ?? "-";
+    string GetCustomerName(int id) => customers.FirstOrDefault(c => c.Id == id)?.Name ?? "-";
+}

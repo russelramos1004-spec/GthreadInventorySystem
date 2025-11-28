@@ -1,0 +1,54 @@
+@attribute [Authorize]
+@page "/users"
+@inject Inventory.Core.Services.UserService UserService
+
+<h3>Users</h3>
+
+<div class="card">
+    <div class="form-row">
+        <div class="form-item"><input class="input" placeholder="Username" @bind="username" /></div>
+        <div class="form-item"><input class="input" type="password" placeholder="Password" @bind="password" /></div>
+        <div class="form-item">
+            <select class="input" @bind="role">
+                <option>Admin</option>
+                <option>User</option>
+            </select>
+        </div>
+        <div style="display:flex;align-items:center;"><button class="button" @onclick="Add">Add</button></div>
+    </div>
+
+    <table class="table">
+        <thead><tr><th style="width:60px">ID</th><th>Username</th><th>Role</th><th style="width:160px">Created At</th><th style="width:90px">Actions</th></tr></thead>
+        <tbody>
+            @foreach (var u in users)
+            {
+                <tr>
+                    <td>@u.Id</td>
+                    <td>@u.Username</td>
+                    <td>@u.Role</td>
+                    <td>@u.CreatedAt.ToString("g")</td>
+                    <td>
+                        <button class="button small danger" @onclick="(() => DeleteUser(u.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    List<Inventory.Core.Models.User> users = new();
+    string username = "", password = "", role = "User";
+
+    protected override void OnInitialized() => Load();
+    void Load() { users = UserService.GetAll() ?? new(); }
+
+    void Add()
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) return;
+        UserService.Create(new Inventory.Core.Models.User { Username = username.Trim(), Password = password, Role = role });
+        username = password = ""; role = "User"; Load();
+    }
+
+    void DeleteUser(int id) { UserService.Delete(id); Load(); }
+}

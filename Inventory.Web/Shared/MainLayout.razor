@@ -1,0 +1,45 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="sidebar">
+    <div class="brand">Inventory</div>
+    <nav>
+        <ul>
+            <li><a href="/" class="@((Nav.Uri.EndsWith("/")) ? "active" : "")">Dashboard</a></li>
+            <li><a href="/products">Products</a></li>
+            <li><a href="/categories">Categories</a></li>
+            <li><a href="/suppliers">Suppliers</a></li>
+            <li><a href="/customers">Customers</a></li>
+            <li><a href="/stockin">Stock In</a></li>
+            <li><a href="/stockout">Stock Out</a></li>
+            <li><a href="/transactions">Transactions</a></li>
+            <li><a href="/users">Users</a></li>
+            <li><a href="/auth/login">Login</a></li>
+        </ul>
+    </nav>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <div><h4 style="margin:0">Inventory System</h4></div>
+        <div class="text-muted">
+            @{
+                var uri = Nav.ToAbsoluteUri(Nav.Uri);
+                var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                var welcome = q["welcome"];
+            }
+            @if (!string.IsNullOrWhiteSpace(welcome))
+            {
+                <span>Welcome, <strong>@System.Net.WebUtility.HtmlEncode(welcome)</strong></span>
+            }
+            else
+            {
+                <span></span>
+            }
+        </div>
+    </div>
+
+    <div class="content">
+        @Body
+    </div>
+</div>

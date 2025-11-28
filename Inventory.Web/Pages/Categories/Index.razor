@@ -1,0 +1,81 @@
+@attribute [Authorize]
+@page "/categories"
+@inject Inventory.Core.Services.CategoryService CategoryService
+
+<h3>Categories</h3>
+
+<div class="card">
+    <div class="form-row">
+        <div class="form-item">
+            <input class="input" placeholder="Name" @bind="name" />
+        </div>
+        <div class="form-item">
+            <input class="input" placeholder="Description" @bind="desc" />
+        </div>
+        <div style="display:flex; align-items:center;">
+            <button class="button" @onclick="Add">Add</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-message" style="color: red; font-size: 14px; margin-top: 10px;">
+            @errorMessage
+        </div>
+    }
+
+    <table class="table" aria-label="Categories">
+        <thead><tr><th style="width:70px">ID</th><th>Name</th><th>Description</th><th style="width:90px">Actions</th></tr></thead>
+        <tbody>
+            @foreach (var c in cats)
+            {
+                <tr>
+                    <td>@c.Id</td>
+                    <td>@c.Name</td>
+                    <td>@c.Description</td>
+                    <td>
+                        <button class="button small danger" @onclick="(() => Delete(c.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    List<Inventory.Core.Models.Category> cats = new();
+    string name = "", desc = "";
+    string errorMessage = "";
+
+    protected override void OnInitialized() => Load();
+
+    void Load() => cats = CategoryService.GetAll() ?? new();
+
+    void Add()
+    {
+        errorMessage = ""; 
+        
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            errorMessage = "Field required: Name";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(desc))
+        {
+            errorMessage = "Field required: Description";
+            return;
+        }
+
+        
+        CategoryService.Create(new Inventory.Core.Models.Category { Name = name.Trim(), Description = desc?.Trim() });
+        name = desc = "";
+        Load();
+    }
+
+    void Delete(int id)
+    {
+        CategoryService.Delete(id);
+        Load();
+    }
+}

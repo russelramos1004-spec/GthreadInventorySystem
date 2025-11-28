@@ -1,0 +1,26 @@
+-- Run this script to create InventoryDB and tables
+IF DB_ID('InventoryDB') IS NULL CREATE DATABASE InventoryDB; GO
+USE InventoryDB; GO
+-- Users
+IF OBJECT_ID('Users','U') IS NOT NULL DROP TABLE Users; GO
+CREATE TABLE Users (Id INT IDENTITY(1,1) PRIMARY KEY, FirstName NVARCHAR(50), LastName NVARCHAR(50), Username NVARCHAR(50) UNIQUE NOT NULL, PasswordHash NVARCHAR(255) NOT NULL, Role NVARCHAR(20) NOT NULL, CreatedAt DATETIME DEFAULT GETDATE()); GO
+INSERT INTO Users (FirstName, LastName, Username, PasswordHash, Role) VALUES ('System','Admin','admin','123','Admin'); GO
+-- Categories
+IF OBJECT_ID('Categories','U') IS NOT NULL DROP TABLE Categories; GO
+CREATE TABLE Categories (Id INT IDENTITY(1,1) PRIMARY KEY, Name NVARCHAR(100) NOT NULL, Description NVARCHAR(255), CreatedAt DATETIME DEFAULT GETDATE()); GO
+-- Products
+IF OBJECT_ID('Products','U') IS NOT NULL DROP TABLE Products; GO
+CREATE TABLE Products (Id INT IDENTITY(1,1) PRIMARY KEY, Name NVARCHAR(100) NOT NULL, CategoryId INT NOT NULL, Description NVARCHAR(255), Price DECIMAL(18,2), Quantity INT DEFAULT 0, CreatedAt DATETIME DEFAULT GETDATE(), FOREIGN KEY (CategoryId) REFERENCES Categories(Id)); GO
+-- Suppliers
+IF OBJECT_ID('Suppliers','U') IS NOT NULL DROP TABLE Suppliers; GO
+CREATE TABLE Suppliers (Id INT IDENTITY(1,1) PRIMARY KEY, Name NVARCHAR(100), Email NVARCHAR(100), Phone NVARCHAR(50), Address NVARCHAR(255), CreatedAt DATETIME DEFAULT GETDATE()); GO
+-- Customers
+IF OBJECT_ID('Customers','U') IS NOT NULL DROP TABLE Customers; GO
+CREATE TABLE Customers (Id INT IDENTITY(1,1) PRIMARY KEY, Name NVARCHAR(100), Email NVARCHAR(100), Phone NVARCHAR(50), Address NVARCHAR(255), CreatedAt DATETIME DEFAULT GETDATE()); GO
+-- StockIn
+IF OBJECT_ID('StockIn','U') IS NOT NULL DROP TABLE StockIn; GO
+CREATE TABLE StockIn (Id INT IDENTITY(1,1) PRIMARY KEY, ProductId INT, SupplierId INT, Quantity INT, TotalCost DECIMAL(18,2), Date DATETIME DEFAULT GETDATE(), FOREIGN KEY (ProductId) REFERENCES Products(Id), FOREIGN KEY (SupplierId) REFERENCES Suppliers(Id)); GO
+-- StockOut
+IF OBJECT_ID('StockOut','U') IS NOT NULL DROP TABLE StockOut; GO
+CREATE TABLE StockOut (Id INT IDENTITY(1,1) PRIMARY KEY, ProductId INT, CustomerId INT, Quantity INT, TotalAmount DECIMAL(18,2), Date DATETIME DEFAULT GETDATE(), FOREIGN KEY (ProductId) REFERENCES Products(Id), FOREIGN KEY (CustomerId) REFERENCES Customers(Id)); GO
+PRINT 'Database script complete.'

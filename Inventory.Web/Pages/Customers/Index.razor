@@ -1,0 +1,93 @@
+@attribute [Authorize]
+@page "/customers"
+@inject Inventory.Core.Services.CustomerService CustomerService
+
+<h3>Customers</h3>
+
+<div class="card">
+    <div class="form-row">
+        <div class="form-item"><input class="input" placeholder="Name" @bind="name" /></div>
+        <div class="form-item"><input class="input" placeholder="Phone" @bind="phone" /></div>
+        <div class="form-item"><input class="input" placeholder="Email" @bind="email" /></div>
+        <div style="display:flex; align-items:center;">
+            <button class="button" @onclick="Add">Add</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-message" style="color: red; font-size: 14px; margin-top: 10px;">
+            @errorMessage
+        </div>
+    }
+
+    <table class="table">
+        <thead><tr><th style="width:60px">ID</th><th>Name</th><th>Phone</th><th>Email</th><th style="width:90px">Actions</th></tr></thead>
+        <tbody>
+            @foreach (var c in customers)
+            {
+                <tr>
+                    <td>@c.Id</td>
+                    <td>@c.Name</td>
+                    <td>@c.Phone</td>
+                    <td>@c.Email</td>
+                    <td>
+                        <button class="button small danger" @onclick="(() => Delete(c.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    List<Inventory.Core.Models.Customer> customers = new();
+    string name = "", phone = "", email = "";
+    string errorMessage = "";
+
+    protected override void OnInitialized() => Load();
+
+    void Load() => customers = CustomerService.GetAll() ?? new();
+
+    void Add()
+    {
+        errorMessage = ""; 
+
+        
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            errorMessage = "Field required: Name";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            errorMessage = "Field required: Phone";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            errorMessage = "Field required: Email";
+            return;
+        }
+
+        
+        CustomerService.Create(new Inventory.Core.Models.Customer
+            {
+                Name = name.Trim(),
+                Phone = phone?.Trim(),
+                Email = email?.Trim()
+            });
+
+        
+        name = phone = email = "";
+        Load();
+    }
+
+    void Delete(int id)
+    {
+        CustomerService.Delete(id);
+        Load();
+    }
+}

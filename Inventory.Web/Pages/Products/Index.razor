@@ -1,0 +1,126 @@
+@attribute [Authorize]
+@page "/products"
+@inject Inventory.Core.Services.ProductService ProductService
+@inject Inventory.Core.Services.CategoryService CategoryService
+
+<h3>Products</h3>
+
+<div class="card">
+    <div class="form-row">
+        <div class="form-item"><input class="input" placeholder="Name" @bind="name" /></div>
+
+        <div class="form-item">
+            <select class="input" @bind="categoryId">
+                <option value="0">-- Category --</option>
+                @foreach (var c in cats)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-item"><input class="input" placeholder="Price" type="number" step="0.01" @bind="price" /></div>
+        <div class="form-item"><input class="input" placeholder="Qty" type="number" @bind="qty" /></div>
+
+        <div style="display:flex;align-items:center;">
+            <button class="button" @onclick="Add">Add</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div style="color:red; margin-top:10px;">@errorMessage</div>
+    }
+
+    <table class="table">
+        <thead><tr><th style="width:60px">ID</th><th>Name</th><th>Category</th><th style="width:120px">Price</th><th style="width:80px">Qty</th><th style="width:90px">Actions</th></tr></thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.Name</td>
+                    <td>@GetCategoryName(p.CategoryId)</td>
+                    <td>@p.Price.ToString("F2")</td>
+                    <td>@p.Quantity</td>
+                    <td>
+                        <button class="button small danger" @onclick="(() => Delete(p.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    List<Inventory.Core.Models.Product> products = new();
+    List<Inventory.Core.Models.Category> cats = new();
+
+    string name = "";
+    int categoryId = 0;
+    decimal price = 0;
+    int qty = 0;
+
+    string errorMessage = "";
+
+    protected override void OnInitialized() { Load(); }
+
+    void Load()
+    {
+        products = ProductService.GetAll() ?? new();
+        cats = CategoryService.GetAll() ?? new();
+    }
+
+    void Add()
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            errorMessage = "Field required: Name";
+            return;
+        }
+
+        if (categoryId == 0)
+        {
+            errorMessage = "Field required: Category";
+            return;
+        }
+
+        if (price <= 0)
+        {
+            errorMessage = "Field required: Price must be greater than 0";
+            return;
+        }
+
+        if (qty <= 0)
+        {
+            errorMessage = "Field required: Quantity must be greater than 0";
+            return;
+        }
+
+        ProductService.Create(new Inventory.Core.Models.Product
+            {
+                Name = name.Trim(),
+                CategoryId = categoryId,
+                Price = price,
+                Quantity = qty
+            });
+
+        name = "";
+        price = 0;
+        qty = 0;
+        categoryId = 0;
+
+        Load();
+    }
+
+    void Delete(int id)
+    {
+        ProductService.Delete(id);
+        Load();
+    }
+
+    string GetCategoryName(int id) =>
+        cats.FirstOrDefault(c => c.Id == id)?.Name ?? "-";
+}

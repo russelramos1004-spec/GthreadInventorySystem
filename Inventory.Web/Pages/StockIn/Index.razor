@@ -1,0 +1,97 @@
+@attribute [Authorize]
+@page "/stockin"
+@inject Inventory.Core.Services.StockInService StockInService
+@inject Inventory.Core.Services.ProductService ProductService
+@inject Inventory.Core.Services.SupplierService SupplierService
+
+<h3>Stock In</h3>
+<div class="card">
+
+    <!-- Input Form -->
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select @bind="productId" class="input">
+            <option value="0">-- Product --</option>
+            @foreach (var p in products)
+            {
+                <option value="@p.Id">@p.Name</option>
+            }
+        </select>
+        <select @bind="supplierId" class="input">
+            <option value="0">-- Supplier --</option>
+            @foreach (var s in suppliers)
+            {
+                <option value="@s.Id">@s.Name</option>
+            }
+        </select>
+        <input class="input" placeholder="Quantity" type="number" @bind="qty" />
+        <input class="input" placeholder="Total Cost" type="number" step="0.01" @bind="total" />
+        <button class="button" @onclick="Add">Add</button>
+    </div>
+
+   
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div style="color:red; margin-bottom:8px;">@message</div>
+    }
+
+    
+    <ul>
+        @foreach (var si in stockins)
+        {
+            <li>@si.Id - @si.ProductId - @si.Quantity - @si.TotalCost</li>
+        }
+    </ul>
+</div>
+
+@code {
+    List<Inventory.Core.Models.StockIn> stockins = new();
+    List<Inventory.Core.Models.Product> products = new();
+    List<Inventory.Core.Models.Supplier> suppliers = new();
+
+    int productId = 0;
+    int supplierId = 0;
+    int qty = 0;
+    decimal total = 0;
+
+    string message = ""; 
+
+    protected override void OnInitialized()
+    {
+        products = ProductService.GetAll();
+        suppliers = SupplierService.GetAll();
+        stockins = StockInService.GetAll();
+    }
+
+    void Add()
+    {
+        
+        if (productId == 0 || supplierId == 0 || qty <= 0 || total <= 0)
+        {
+            message = "Field required";
+            return;
+        }
+
+        string msg; 
+
+        bool success = StockInService.Create(new Inventory.Core.Models.StockIn
+        {
+            ProductId = productId,
+            SupplierId = supplierId,
+            Quantity = qty,
+            TotalCost = total,
+            DateIn = DateTime.Now
+        }, out msg);
+
+        if (!success)
+        {
+            message = msg;
+            return;
+        }
+
+        
+        stockins = StockInService.GetAll();
+        productId = supplierId = qty = 0;
+        total = 0;
+        message = ""; 
+    }
+}
